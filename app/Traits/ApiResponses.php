@@ -5,67 +5,86 @@ namespace App\Traits;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Trait ApiResponse
+ *
+ * Provides standardized JSON:API (v1.1) compliant
+ * success and error responses for REST APIs.
+ *
+ * This trait enforces:
+ * - A top-level `jsonapi` object
+ * - Proper `data` and `errors` members
+ * - Correct HTTP status codes
+ *
+ * @see https://jsonapi.org/format/
+ */
 trait ApiResponses
 {
     /**
-     * Return a successful JSON response with HTTP 200 status.
+     * Return a successful JSON:API response.
      *
-     * Shortcut helper for common successful responses.
+     * Example response:
+     * {
+     *   "jsonapi": { "version": "1.1" },
+     *   "data": {...}
+     * }
      *
-     * @param  string  $message  Human-readable success message.
-     * @param  mixed   $data     Optional response payload.
-     * @return JsonResponse
-     */
-    public function ok(string $message = 'Success', mixed $data = null): JsonResponse
-    {
-        return $this->success($message, $data, Response::HTTP_OK);
-    }
-
-    /**
-     * Return a successful JSON response.
+     * @param  mixed $data The primary resource object or resource collection.
+     * @param  int   $status HTTP status code (default: 200 OK).
+     * @param  string|null $selfLink  Optional "self" link for the current resource.
      *
-     * This method is used internally to build standardized
-     * success responses with a customizable HTTP status code.
-     *
-     * @param  string  $message     Human-readable success message.
-     * @param  mixed   $data        Optional response payload.
-     * @param  int     $statusCode  HTTP status code.
      * @return JsonResponse
      */
     protected function success(
-        string $message = 'Success',
-        mixed $data = null,
-        int $statusCode = Response::HTTP_OK
+        mixed $data,
+        int $status = Response::HTTP_OK,
+        ?string $selfLink = null
     ): JsonResponse {
-        return response()->json([
-            'message' => $message,
-            'success' => true,
-            'data'    => $data,
-        ], $statusCode);
+        $response = [
+            'jsonapi' => ['version' => '1.1'],
+            'data' => $data,
+        ];
+
+        if ($selfLink) {
+            $response['links']['self'] = $selfLink;
+        }
+
+        return response()->json($response, $status);
     }
 
     /**
-     * Return a 404 Not Found JSON response.
+     * Return a JSON:API compliant error response.
      *
-     * @param  string  $message  Error message.
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function notFound(string $message = 'Not Found.'): JsonResponse
-    {
-        return response()->json(['message' => $message], Response::HTTP_NOT_FOUND);
-    }
-
-    /**
-     * Return a JSON error response.
+     * Example response:
+     * {
+     *   "jsonapi": { "version": "1.1" },
+     *   "errors": [
+     *     {
+     *       "status": "403",
+     *       "title": "Forbidden",
+     *       "detail": "You are not authorized to perform this action."
+     *     }
+     *   ]
+     * }
      *
-     * @param  string  $message     Error message.
-     * @param  int     $statusCode  HTTP status code.
+     * @param  string $title A short, human-readable summary of the error.
+     * @param  string $detail A human-readable explanation specific to this occurrence.
+     * @param  int    $status HTTP status code.
+     *
      * @return JsonResponse
      */
-    protected function error($message, $statusCode)
-    {
+    public function error(
+        string $title,
+        string $detail,
+        int $status
+    ): JsonResponse {
         return response()->json([
-            'message' => $message,
-        ], $statusCode);
+            'jsonapi' => ['version' => '1.1'],
+            'errors' => [[
+                'status' => (string) $status,
+                'title'  => $title,
+                'detail' => $detail,
+            ]],
+        ], $status);
     }
 }

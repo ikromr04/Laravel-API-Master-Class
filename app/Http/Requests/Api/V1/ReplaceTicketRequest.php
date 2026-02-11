@@ -26,12 +26,21 @@ class ReplaceTicketRequest extends BaseTicketRequest
             'data.attributes.title' => ['required', 'string'],
             'data.attributes.description' => ['required', 'string'],
             'data.attributes.status' => ['required', 'string', Rule::in(TicketStatus::values())],
+            'data.relationships.author.data.id' => ['required', 'exists:users,id']
         ];
 
-        if ($this->routeIs('tickets.replace')) {
-            $rules['data.relationships.author.data.id'] = ['required', 'exists:users,id'];
-        }
-
         return $rules;
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    public function prepareForValidation(): void
+    {
+        if ($this->routeIs('authors.tickets.replace')) {
+            $this->merge([
+                'data.relationships.author.data.id' => $this->route('author')
+            ]);
+        }
     }
 }

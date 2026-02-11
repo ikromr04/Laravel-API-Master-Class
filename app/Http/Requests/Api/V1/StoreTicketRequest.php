@@ -3,6 +3,9 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Enums\TicketStatus;
+use App\Models\Ticket;
+use App\Permissions\Abilities;
+use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 
 class StoreTicketRequest extends BaseTicketRequest
@@ -12,7 +15,20 @@ class StoreTicketRequest extends BaseTicketRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('create', Ticket::class);
+    }
+
+    /**
+     * Handle failed authorization for the FormRequest.
+     */
+    protected function failedAuthorization(): void
+    {
+        $this->error(
+            'You are not authorized to create a new ticket.',
+            Response::HTTP_FORBIDDEN
+        )->send();
+
+        exit;
     }
 
     /**
@@ -23,13 +39,18 @@ class StoreTicketRequest extends BaseTicketRequest
     public function rules(): array
     {
         $rules = [
+            'data.relationships.author.data.id' => ['required', 'exists:users,id'],
+
             'data.attributes.title' => ['required', 'string'],
             'data.attributes.description' => ['required', 'string'],
             'data.attributes.status' => ['required', 'string', Rule::in(TicketStatus::values())],
         ];
 
-        if ($this->routeIs('tickets.store')) {
-            $rules['data.relationships.author.data.id'] = ['required', 'exists:users,id'];
+        $user = $this->user();
+
+        if ($user->tokenCan(Abilities::CREATE_OWN_TICKET)) {
+            $rules['data.relationships.author.data.id'][] = Rule::in([$user->id]);
+            $rules['data.attributes.status'] = ['prohibited'];
         }
 
         return $rules;

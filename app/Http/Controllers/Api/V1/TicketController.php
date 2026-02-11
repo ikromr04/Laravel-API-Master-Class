@@ -18,7 +18,7 @@ class TicketController extends ApiController
      */
     public function index(TicketFilter $filter): TicketCollection
     {
-        $tickets = Ticket::filter($filter)->get();
+        $tickets = Ticket::filter($filter)->paginate();
 
         return new TicketCollection($tickets);
     }
@@ -49,8 +49,9 @@ class TicketController extends ApiController
     /**
      * Replace an existing ticket.
      */
-    public function replace(ReplaceTicketRequest $request, string $ticketId): TicketResource|JsonResponse
+    public function replace(ReplaceTicketRequest $request, string $ticketId)
     {
+        return $request->mappedAttributes();
         $ticket = Ticket::find($ticketId);
         if (! $ticket) {
             return $this->notFound('Ticket cannot be found.');

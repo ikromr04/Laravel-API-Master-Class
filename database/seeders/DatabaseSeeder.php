@@ -18,6 +18,12 @@ class DatabaseSeeder extends Seeder
     {
         $users = User::factory(10)->create();
 
+        User::factory()->create([
+            'email' => 'admin@test.com',
+            'name' => 'Administration',
+            'is_admin' => true
+        ]);
+
         Ticket::factory(100)
             ->recycle($users)
             ->create();

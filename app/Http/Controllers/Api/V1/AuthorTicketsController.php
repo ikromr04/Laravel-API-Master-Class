@@ -88,18 +88,13 @@ class AuthorTicketsController extends ApiController
      */
     public function update(UpdateTicketRequest $request, string $authorId, string $ticketId): TicketResource|JsonResponse
     {
-        $author = User::find($authorId);
-        if (! $author) {
-            return $this->notFound('Author cannot be found.');
-        }
-
-        $ticket = $author->tickets()->find($ticketId);
+        $ticket = Ticket::where('id', $ticketId)->where('user_id', $authorId)->first();
         if (! $ticket) {
             return $this->notFound('Ticket cannot be found.');
         }
 
         $attributes = $request->mappedAttributes();
-        $attributes['user_id'] = $author->id;
+        $attributes['user_id'] = $authorId;
 
         $ticket->update($attributes);
 

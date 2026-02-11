@@ -17,6 +17,12 @@ class TicketCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         return [
+            'jsonapi' => [
+                'version' => '1.1'
+            ],
+            'links' => [
+                'self' => str_replace(['%5B', '%5D'], ['[', ']'], $request->fullUrl())
+            ],
             'data' => TicketResource::collection($this->collection),
         ];
     }

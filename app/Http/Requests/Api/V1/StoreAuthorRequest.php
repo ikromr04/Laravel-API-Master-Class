@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Models\User;
+use Illuminate\Http\Response;
+
 class StoreAuthorRequest extends BaseAuthorRequest
 {
     /**
@@ -9,7 +12,20 @@ class StoreAuthorRequest extends BaseAuthorRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('create', User::class);
+    }
+
+    /**
+     * Handle failed authorization for the FormRequest.
+     */
+    protected function failedAuthorization(): void
+    {
+        $this->error(
+            'You are not authorized to create a new author.',
+            Response::HTTP_FORBIDDEN
+        )->send();
+
+        exit;
     }
 
     /**

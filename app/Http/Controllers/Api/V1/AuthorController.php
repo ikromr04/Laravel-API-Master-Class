@@ -26,7 +26,7 @@ class AuthorController extends ApiController
     /**
      * Create a new author.
      */
-    public function store(StoreAuthorRequest $request): AuthorResource
+    public function store(StoreAuthorRequest $request): AuthorResource|JsonResponse
     {
         $user = User::create($request->mappedAttributes());
 
